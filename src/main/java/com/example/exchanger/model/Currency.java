@@ -1,20 +1,14 @@
 package com.example.exchanger.model;
 
-public class Currencies {
+public class Currency {
 
     private int id;
     private String code;
     private String fullName;
     private String sign;
 
-    public Currencies() {}
+    public Currency() {}
 
-    public Currencies(int id, String code, String fullName, String sign) {
-        this.id = id;
-        this.code = code;
-        this.fullName = fullName;
-        this.sign = sign;
-    }
 
     public int getId() {
         return id;

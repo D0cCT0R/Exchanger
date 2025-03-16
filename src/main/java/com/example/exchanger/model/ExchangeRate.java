@@ -1,15 +1,15 @@
 package com.example.exchanger.model;
 
-public class ExchangeRates {
+public class ExchangeRate {
 
     private int id;
     private int baseCurrencyId;
     private int targetCurrencyId;
     private float rate;
 
-    public ExchangeRates() {}
+    public ExchangeRate() {}
 
-    public ExchangeRates(int id, int baseCurrencyId, float rate, int targetCurrencyId) {
+    public ExchangeRate(int id, int baseCurrencyId, float rate, int targetCurrencyId) {
         this.id = id;
         this.baseCurrencyId = baseCurrencyId;
         this.rate = rate;
