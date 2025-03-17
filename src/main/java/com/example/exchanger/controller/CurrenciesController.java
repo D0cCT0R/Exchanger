@@ -1,6 +1,8 @@
 package com.example.exchanger.controller;
 
 import com.example.exchanger.Entity.ResponseEntity;
+import com.example.exchanger.Exception.ApiException;
+import com.example.exchanger.Exception.ErrorResponse;
 import com.example.exchanger.model.Currency;
 import com.example.exchanger.service.CurrencyService;
 import com.example.exchanger.util.Connector;
@@ -28,16 +30,18 @@ public class CurrenciesController extends HttpServlet {
     public void doPost(HttpServletRequest req, HttpServletResponse resp){
 
     }
+
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             List<Currency> list = currencyService.getAllCurrencies();
             ResponseEntity<List<Currency>> responseEntity = new ResponseEntity<>(200, list);
             jsonUtil.sendJsonResponse(resp, responseEntity);
-        }
-        catch (Exception e){
-            ResponseEntity<Void> responseEntity = new ResponseEntity<>(500, e.getMessage());
+        } catch (ApiException e) {
+            ResponseEntity<ErrorResponse> responseEntity = new ResponseEntity<>(e.getStatusCode(), new ErrorResponse(e.getMessage()));
+            jsonUtil.sendJsonResponse(resp, responseEntity);
+        } catch (Exception e){
+            ResponseEntity<ErrorResponse> responseEntity = new ResponseEntity<>(500, new ErrorResponse("База данных не доступна"));
             jsonUtil.sendJsonResponse(resp, responseEntity);
         }
-
     }
 }

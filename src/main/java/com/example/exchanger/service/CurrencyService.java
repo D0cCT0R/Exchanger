@@ -13,10 +13,12 @@ public class CurrencyService {
         this.currencyDAO = new CurrencyDAO(connector);
     }
 
-    public List<Currency> getAllCurrencies() throws ClassNotFoundException {
+    public List<Currency> getAllCurrencies() throws Exception {
         return currencyDAO.getAll();
     }
-
+    public Currency getOneCurrency(String code) throws Exception{
+        return currencyDAO.getOne(code);
+    }
     public void saveCurrency () {
 
     }

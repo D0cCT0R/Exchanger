@@ -8,12 +8,9 @@ import java.io.IOException;
 
 public class JsonUtil {
     private static final ObjectMapper mapper = new ObjectMapper();
-
-    public void sendJsonResponse(HttpServletResponse resp, ResponseEntity<?> data) throws IOException {
+    public void sendJsonResponse(HttpServletResponse resp, ResponseEntity<?> responseEntity) throws IOException {
         resp.setContentType("application/json");
-        resp.setStatus(data.getStatus());
-        if (data.getData() != null) {
-            new ObjectMapper().writeValue(resp.getWriter(), data.getData());
-        } else new ObjectMapper().writeValue(resp.getWriter(), data.getError());
+        resp.setStatus(responseEntity.getStatus());
+        new ObjectMapper().writeValue(resp.getWriter(), responseEntity.getData());
     }
 }

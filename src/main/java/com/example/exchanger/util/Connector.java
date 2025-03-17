@@ -1,8 +1,8 @@
 package com.example.exchanger.util;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+
+
+import java.sql.*;
 
 
 public class Connector {
@@ -18,17 +18,18 @@ public class Connector {
         }
     }
 
-    public Connection getConnection() throws ClassNotFoundException, SQLException {
+    public Connection getConnection() throws Exception {
         return DriverManager.getConnection(URL, USER, PASSWORD);
     }
 
-    public void closeConnection(Connection connection) {
-        if (connection != null) {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+    public void closeConnection(Connection connection, Statement statement, ResultSet resultSet) throws Exception {
+        try {
+            connection.close();
+            statement.close();
+            resultSet.close();
+        } catch (Exception e) {
+            throw new Exception();
         }
+
     }
 }
