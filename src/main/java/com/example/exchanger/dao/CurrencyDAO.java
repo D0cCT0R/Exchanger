@@ -1,4 +1,5 @@
 package com.example.exchanger.dao;
+import com.example.exchanger.Exception.CurrencyAlreadyExists;
 import com.example.exchanger.Exception.CurrencyNotFound;
 import com.example.exchanger.Exception.DatabaseIsNotAvailable;
 import com.example.exchanger.model.Currency;
@@ -28,7 +29,7 @@ public class CurrencyDAO {
                 Currency currency = new Currency();
                 currency.setId(resultSet.getInt("id"));
                 currency.setCode(resultSet.getString("code"));
-                currency.setFullName(resultSet.getString("full_name"));
+                currency.setName(resultSet.getString("full_name"));
                 currency.setSign(resultSet.getString("sign"));
                 list.add(currency);
             }
@@ -50,15 +51,52 @@ public class CurrencyDAO {
                 Currency currency = new Currency();
                 currency.setId(resultSet.getInt("id"));
                 currency.setCode(resultSet.getString("code"));
-                currency.setFullName(resultSet.getString("full_name"));
+                currency.setName(resultSet.getString("full_name"));
                 currency.setSign(resultSet.getString("sign"));
                 connector.closeConnection(connection, preparedStatement, resultSet);
                 return currency;
             } else {
                 throw new CurrencyNotFound("Валюта не найдена");
             }
-        } catch (Exception e){
+        } catch (SQLException e){
+            throw new DatabaseIsNotAvailable("База данных недоступна");
+        }
+    }
+
+    public Currency save(String name, String code, String sign) {
+        try {
+            String sql = "insert into currencies (full_name, code, sign) values (?, ?, ?)";
+            Connection connection = connector.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setString(1, name);
+            preparedStatement.setString(2, code);
+            preparedStatement.setString(3, sign);
+            preparedStatement.executeUpdate();
+            ResultSet resultSet = preparedStatement.getGeneratedKeys();
+            if (resultSet.next()) {
+                int id = resultSet.getInt(1);
+                Currency currency = new Currency();
+                currency.setId(id);
+                currency.setName(name);
+                currency.setCode(code);
+                currency.setSign(sign);
+                connector.closeConnection(connection, preparedStatement, resultSet);
+                return currency;
+            } else{
+                Currency currency = new Currency();
+                currency.setId(0);
+                currency.setName(name);
+                currency.setCode(code);
+                currency.setSign(sign);
+                connector.closeConnection(connection, preparedStatement, resultSet);
+                return currency;
+            }
+        } catch (SQLException e){
+            if ("23505".equals(e.getSQLState())){
+                throw new CurrencyAlreadyExists("Валюта с таким кодом уже существует");
+            }
             throw new DatabaseIsNotAvailable("База данных недоступна");
         }
     }
 }
+

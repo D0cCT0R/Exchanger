@@ -14,21 +14,21 @@ public class Connector {
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException("PostgresSQL Driver not found", e);
+            throw new RuntimeException("PostgresSQL драйвер не найден", e);
         }
     }
 
-    public Connection getConnection() throws Exception {
+    public Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASSWORD);
     }
 
-    public void closeConnection(Connection connection, Statement statement, ResultSet resultSet) throws Exception {
+    public void closeConnection(Connection connection, Statement statement, ResultSet resultSet) throws SQLException {
         try {
             connection.close();
             statement.close();
             resultSet.close();
-        } catch (Exception e) {
-            throw new Exception();
+        } catch (SQLException e) {
+            throw new SQLException();
         }
 
     }

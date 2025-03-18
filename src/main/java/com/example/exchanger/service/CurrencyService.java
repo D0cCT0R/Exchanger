@@ -19,7 +19,7 @@ public class CurrencyService {
     public Currency getOneCurrency(String code) throws Exception{
         return currencyDAO.getOne(code);
     }
-    public void saveCurrency () {
-
+    public Currency saveCurrency (String name, String code, String sign) throws Exception {
+        return currencyDAO.save(name, code, sign);
     }
 }
