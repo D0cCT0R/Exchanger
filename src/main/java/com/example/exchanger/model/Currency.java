@@ -9,6 +9,12 @@ public class Currency {
 
     public Currency() {}
 
+    public Currency(int id, String sign, String name, String code) {
+        this.id = id;
+        this.sign = sign;
+        this.name = name;
+        this.code = code;
+    }
 
     public int getId() {
         return id;
