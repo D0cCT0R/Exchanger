@@ -16,4 +16,8 @@ public class ExchangeRateService {
     public List<ExchangeRate> getAllExchangeRates() {
         return exchangeRateDao.getAll();
     }
+
+    public ExchangeRate getExchangeRate(String baseCurr, String targetCurr) {
+        return exchangeRateDao.getOne(baseCurr, targetCurr);
+    }
 }
