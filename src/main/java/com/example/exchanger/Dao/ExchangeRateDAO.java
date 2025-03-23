@@ -2,6 +2,8 @@ package com.example.exchanger.dao;
 
 
 
+import com.example.exchanger.Exception.ApiException;
+import com.example.exchanger.Exception.CurrencyAlreadyExists;
 import com.example.exchanger.Exception.CurrencyNotFound;
 import com.example.exchanger.Exception.DatabaseIsNotAvailable;
 import com.example.exchanger.model.Currency;
@@ -72,8 +74,8 @@ public class ExchangeRateDAO {
                 Currency targetCurrency = new Currency(
                         resultSet.getInt("target_id"),
                         resultSet.getString("target_code"),
-                        resultSet.getString("base_name"),
-                        resultSet.getString("base_sign"));
+                        resultSet.getString("target_name"),
+                        resultSet.getString("target_sign"));
                 ExchangeRate exchangeRate = new ExchangeRate(
                         resultSet.getInt("exchange_rate_id"),
                         baseCurrency,
@@ -84,6 +86,48 @@ public class ExchangeRateDAO {
                 throw new CurrencyNotFound("Обменный курс для пары не найден");
             }
         } catch (SQLException e) {
+            throw new DatabaseIsNotAvailable("База данных недоступна");
+        }
+    }
+
+    public ExchangeRate updateRate(String baseCurr, String targetCurr, float rate) {
+        try{
+            ExchangeRate exchangeRate = getOne(baseCurr, targetCurr);
+            Connection connection = connector.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement("update exchange_rates set rate=? where id=?");
+            preparedStatement.setFloat(1, rate);
+            preparedStatement.setInt(2, exchangeRate.getId());
+            preparedStatement.executeUpdate();
+            exchangeRate.setRate(rate);
+            return exchangeRate;
+        } catch (ApiException e) {
+            throw new CurrencyNotFound("Валютная пара отсутствует в базе данных");
+        } catch (SQLException e) {
+            throw new DatabaseIsNotAvailable("База данных недоступна");
+        }
+    }
+
+    public ExchangeRate saveRate(Currency baseCurrency, Currency targetCurrency, float rate) {
+        try {
+            String sql = "insert into exchange_rates (base_currency_id, target_currency_id, rate) values (?,?,?)";
+            Connection connection = connector.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setInt(1, baseCurrency.getId());
+            preparedStatement.setInt(2, targetCurrency.getId());
+            preparedStatement.setFloat(3, rate);
+            preparedStatement.executeUpdate();
+            ResultSet resultSet = preparedStatement.getGeneratedKeys();
+            if (resultSet.next()) {
+                int id = resultSet.getInt(1);
+                return new ExchangeRate(id, baseCurrency, targetCurrency, rate);
+            } else {
+                int id = 0;
+                return new ExchangeRate(id, baseCurrency, targetCurrency, rate);
+            }
+        } catch (SQLException e) {
+            if ("23505".equals(e.getSQLState())){
+                throw new CurrencyAlreadyExists("Валютная пара с таким кодом уже существует");
+            }
             throw new DatabaseIsNotAvailable("База данных недоступна");
         }
     }
