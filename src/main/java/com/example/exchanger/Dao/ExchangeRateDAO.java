@@ -39,8 +39,8 @@ public class ExchangeRateDAO {
                 Currency targetCurrency = new Currency(
                         resultSet.getInt("target_id"),
                         resultSet.getString("target_code"),
-                        resultSet.getString("base_name"),
-                        resultSet.getString("base_sign"));
+                        resultSet.getString("target_name"),
+                        resultSet.getString("target_sign"));
                 ExchangeRate exchangeRate = new ExchangeRate(
                         resultSet.getInt("exchange_rate_id"),
                         baseCurrency,
@@ -83,7 +83,7 @@ public class ExchangeRateDAO {
                         resultSet.getFloat("rate"));
                 return exchangeRate;
             } else {
-                throw new CurrencyNotFound("Обменный курс для пары не найден");
+                return null;
             }
         } catch (SQLException e) {
             throw new DatabaseIsNotAvailable("База данных недоступна");

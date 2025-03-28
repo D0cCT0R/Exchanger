@@ -32,7 +32,7 @@ public class ExchangeRate {
         this.baseCurrency = baseCurrency;
     }
 
-    public Currency getTargetCurrencyId() {
+    public Currency getTargetCurrency() {
         return targetCurrency;
     }
 
