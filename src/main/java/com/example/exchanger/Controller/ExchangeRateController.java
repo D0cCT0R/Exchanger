@@ -1,13 +1,12 @@
 package com.example.exchanger.controller;
 
 
-import com.example.exchanger.Entity.ResponseEntity;
 import com.example.exchanger.Exception.ApiException;
 import com.example.exchanger.Exception.ErrorResponse;
 import com.example.exchanger.model.ExchangeRate;
 import com.example.exchanger.service.ExchangeRateService;
 import com.example.exchanger.util.Connector;
-import com.example.exchanger.util.JsonUtil;
+import com.example.exchanger.util.ResponseSender;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,41 +23,36 @@ import java.util.stream.Collectors;
 public class ExchangeRateController extends HttpServlet {
     Connector connector;
     ExchangeRateService exchangeRateService;
-    JsonUtil jsonUtil;
+    ResponseSender responseSender;
 
     public ExchangeRateController() {
         this.connector = new Connector();
         this.exchangeRateService = new ExchangeRateService(connector);
-        this.jsonUtil = new JsonUtil();
+        this.responseSender = new ResponseSender();
     }
 
     public void doPatch(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             String pathInfo = req.getPathInfo().substring(1).toUpperCase();
             if (pathInfo.length() != 6) {
-                ResponseEntity<ErrorResponse> responseEntity = new ResponseEntity<>(400, new ErrorResponse("Коды валют пары отсутствуют в адресе"));
-                jsonUtil.sendJsonResponse(resp, responseEntity);
+                responseSender.sendResponse(new ErrorResponse("Коды валют пары отсутствуют в адресе"), 400, resp);
                 return;
             }
             Map<String, String> map = parseFormData(req);
             String bodyRate = map.get("rate");
             if (bodyRate == null) {
-                ResponseEntity<ErrorResponse> responseEntity = new ResponseEntity<>(400, new ErrorResponse("Отсутствует нужное поле формы"));
-                jsonUtil.sendJsonResponse(resp, responseEntity);
+                responseSender.sendResponse(new ErrorResponse("Отсутствует нужное поле формы"), 400, resp);
                 return;
             }
             String baseCurr = pathInfo.substring(0,3);
             String targetCurr = pathInfo.substring(3);
             float rate = Float.parseFloat(bodyRate);
             ExchangeRate exchangeRate = exchangeRateService.updateExchangeRate(baseCurr, targetCurr, rate);
-            ResponseEntity<ExchangeRate> responseEntity =  new ResponseEntity<>(200, exchangeRate);
-            jsonUtil.sendJsonResponse(resp, responseEntity);
+            responseSender.sendResponse(exchangeRate, 200, resp);
         } catch (ApiException e) {
-            ResponseEntity<ErrorResponse> responseEntity = new ResponseEntity<>(e.getStatusCode(), new ErrorResponse(e.getMessage()));
-            jsonUtil.sendJsonResponse(resp, responseEntity);
+            responseSender.sendResponse(new ErrorResponse(e.getMessage()), e.getStatusCode(), resp);
         } catch (Exception e) {
-            ResponseEntity<ErrorResponse> responseEntity = new ResponseEntity<>(500, new ErrorResponse("База данных недоступна"));
-            jsonUtil.sendJsonResponse(resp, responseEntity);
+            responseSender.sendResponse(new ErrorResponse("База данных недоступна"), 500, resp);
         }
     }
 
@@ -66,21 +60,17 @@ public class ExchangeRateController extends HttpServlet {
         try {
             String pathInfo = req.getPathInfo().substring(1).toUpperCase();
             if (pathInfo.length() != 6) {
-                ResponseEntity<ErrorResponse> responseEntity = new ResponseEntity<>(400, new ErrorResponse("Коды валют пары отсутствуют в адресе"));
-                jsonUtil.sendJsonResponse(resp, responseEntity);
+                responseSender.sendResponse(new ErrorResponse("Коды валют пары отсутствуют в адресе"), 400, resp);
                 return;
             }
             String baseCurr = pathInfo.substring(0,3);
             String targetCurr = pathInfo.substring(3);
             ExchangeRate exchangeRate = exchangeRateService.getExchangeRate(baseCurr, targetCurr);
-            ResponseEntity<ExchangeRate> responseEntity = new ResponseEntity<>(200, exchangeRate);
-            jsonUtil.sendJsonResponse(resp, responseEntity);
+            responseSender.sendResponse(exchangeRate, 200, resp);
         } catch (ApiException e) {
-            ResponseEntity<ErrorResponse> responseEntity = new ResponseEntity<>(e.getStatusCode(), new ErrorResponse(e.getMessage()));
-            jsonUtil.sendJsonResponse(resp, responseEntity);
+            responseSender.sendResponse(new ErrorResponse(e.getMessage()), e.getStatusCode(), resp);
         } catch (Exception e) {
-            ResponseEntity<ErrorResponse> responseEntity = new ResponseEntity<>(500, new ErrorResponse("База даных недоступна"));
-            jsonUtil.sendJsonResponse(resp, responseEntity);
+            responseSender.sendResponse(new ErrorResponse("База данных недоступна"), 500, resp);
         }
     }
     private Map<String, String> parseFormData(HttpServletRequest request) throws IOException {

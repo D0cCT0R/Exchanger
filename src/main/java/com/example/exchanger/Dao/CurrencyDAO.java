@@ -33,7 +33,6 @@ public class CurrencyDAO {
                 currency.setSign(resultSet.getString("sign"));
                 list.add(currency);
             }
-            connector.closeConnection(connection, statement, resultSet);
         } catch (Exception e) {
             throw new DatabaseIsNotAvailable("База данных недоступна");
         }
@@ -53,7 +52,6 @@ public class CurrencyDAO {
                 currency.setCode(resultSet.getString("code"));
                 currency.setName(resultSet.getString("full_name"));
                 currency.setSign(resultSet.getString("sign"));
-                connector.closeConnection(connection, preparedStatement, resultSet);
                 return currency;
             } else {
                 throw new CurrencyNotFound("Валюта не найдена");
@@ -80,7 +78,7 @@ public class CurrencyDAO {
                 currency.setName(name);
                 currency.setCode(code);
                 currency.setSign(sign);
-                connector.closeConnection(connection, preparedStatement, resultSet);
+
                 return currency;
             } else{
                 Currency currency = new Currency();
@@ -88,7 +86,7 @@ public class CurrencyDAO {
                 currency.setName(name);
                 currency.setCode(code);
                 currency.setSign(sign);
-                connector.closeConnection(connection, preparedStatement, resultSet);
+
                 return currency;
             }
         } catch (SQLException e){

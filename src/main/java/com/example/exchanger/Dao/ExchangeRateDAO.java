@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-//TODO РАЗОБРАТЬСЯ В ПОДРОБНОСТЯХ ЧТО ТАКОЕ ПУЛ СОЕДИНЕНИЙ И ДОБАВИТЬ В ПРИЛОЖЕНИЕ HIKARICP
-//TODO УБРАТЬ СОЗДАНИЕ CONNECTION STATEMENT RESULTSET В ОТДЕЛЬНЫЙ МЕТОД(МОЖЕТ РЕШИТЬСЯ ПУЛОМ СОЕДИНЕНИЙ)
 //TODO ПОРАБОТАТЬ НАД ОБРАБОТКОЙ ОШИБОК
 
 public class ExchangeRateDAO {
@@ -38,7 +36,6 @@ public class ExchangeRateDAO {
             while (resultSet.next()) {
                 list.add(mapToExchangeRate(resultSet));
             }
-            connector.closeConnection(connection, statement, resultSet);
         } catch (SQLException e) {
             throw new DatabaseIsNotAvailable("База данных недоступна");
         }

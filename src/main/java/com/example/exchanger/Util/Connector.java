@@ -2,42 +2,44 @@ package com.example.exchanger.util;
 
 
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.*;
 import java.util.Properties;
 
 
 public class Connector {
-    private final String URL;
-    private final String USER;
-    private final String PASSWORD;
+    private final HikariDataSource DATA_SOURCE;
 
     public Connector() {
+        HikariConfig config = new HikariConfig();
         Properties properties = new Properties();
-        this.URL = properties.getProperty("db_url");
-        this.USER = properties.getProperty("db_user");
-        this.PASSWORD = properties.getProperty("db_password");
-    }
-
-    static {
-        try {
-            Class.forName("org.postgresql.Driver");
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException("PostgresSQL драйвер не найден", e);
-        }
+        config.setJdbcUrl(properties.getProperty("db_url"));
+        config.setUsername(properties.getProperty("db_user"));
+        config.setPassword(properties.getProperty("db_password"));
+        config.setDriverClassName("org.postgresql.Driver");
+        config.setMaximumPoolSize(10);
+        config.setConnectionTimeout(30000);
+        config.setIdleTimeout(60000);
+        DATA_SOURCE = new HikariDataSource(config);
     }
 
     public Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+        return DATA_SOURCE.getConnection();
     }
 
-    public void closeConnection(Connection connection, Statement statement, ResultSet resultSet) throws SQLException {
-        try {
-            connection.close();
-            statement.close();
-            resultSet.close();
-        } catch (SQLException e) {
-            throw new SQLException();
+    public void closeResources(AutoCloseable... resources) {
+        for (AutoCloseable res:resources) {
+            if (res != null) {
+                try {
+                    res.close();
+                } catch (Exception e) {
+                    throw new RuntimeException("Неудалось закрыть ресурсы " + e);
+                }
+            }
         }
-
     }
+
+
 }
