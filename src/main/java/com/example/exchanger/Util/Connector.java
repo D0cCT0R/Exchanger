@@ -3,12 +3,20 @@ package com.example.exchanger.util;
 
 
 import java.sql.*;
+import java.util.Properties;
 
 
 public class Connector {
-    private final String URL = "jdbc:postgresql://localhost:5432/postgres";
-    private final String USER = "postgres";
-    private final String PASSWORD = "0000";
+    private final String URL;
+    private final String USER;
+    private final String PASSWORD;
+
+    public Connector() {
+        Properties properties = new Properties();
+        this.URL = properties.getProperty("db_url");
+        this.USER = properties.getProperty("db_user");
+        this.PASSWORD = properties.getProperty("db_password");
+    }
 
     static {
         try {

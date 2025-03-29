@@ -14,6 +14,11 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+
+//TODO РАЗОБРАТЬСЯ В ПОДРОБНОСТЯХ ЧТО ТАКОЕ ПУЛ СОЕДИНЕНИЙ И ДОБАВИТЬ В ПРИЛОЖЕНИЕ HIKARICP
+//TODO УБРАТЬ СОЗДАНИЕ CONNECTION STATEMENT RESULTSET В ОТДЕЛЬНЫЙ МЕТОД(МОЖЕТ РЕШИТЬСЯ ПУЛОМ СОЕДИНЕНИЙ)
+//TODO ПОРАБОТАТЬ НАД ОБРАБОТКОЙ ОШИБОК
+
 public class ExchangeRateDAO {
     Connector connector;
 
@@ -31,25 +36,10 @@ public class ExchangeRateDAO {
                             "base_curr.full_name as base_name, base_curr.sign as base_sign, target_curr.id as target_id, target_curr.code as target_code, target_curr.full_name as target_name, target_curr.sign as target_sign from exchange_rates er " +
                             "join currencies base_curr on er.base_currency_id=base_curr.id join currencies target_curr on er.target_currency_id=target_curr.id");
             while (resultSet.next()) {
-                Currency baseCurrency = new Currency(
-                        resultSet.getInt("base_id"), 
-                        resultSet.getString("base_code"),
-                        resultSet.getString("base_name"),
-                        resultSet.getString("base_sign"));
-                Currency targetCurrency = new Currency(
-                        resultSet.getInt("target_id"),
-                        resultSet.getString("target_code"),
-                        resultSet.getString("target_name"),
-                        resultSet.getString("target_sign"));
-                ExchangeRate exchangeRate = new ExchangeRate(
-                        resultSet.getInt("exchange_rate_id"),
-                        baseCurrency,
-                        targetCurrency,
-                        resultSet.getFloat("rate"));
-                list.add(exchangeRate);
+                list.add(mapToExchangeRate(resultSet));
             }
             connector.closeConnection(connection, statement, resultSet);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             throw new DatabaseIsNotAvailable("База данных недоступна");
         }
         return list;
@@ -66,24 +56,9 @@ public class ExchangeRateDAO {
             preparedStatement.setString(2, targetCurr);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
-                Currency baseCurrency = new Currency(
-                        resultSet.getInt("base_id"),
-                        resultSet.getString("base_code"),
-                        resultSet.getString("base_name"),
-                        resultSet.getString("base_sign"));
-                Currency targetCurrency = new Currency(
-                        resultSet.getInt("target_id"),
-                        resultSet.getString("target_code"),
-                        resultSet.getString("target_name"),
-                        resultSet.getString("target_sign"));
-                ExchangeRate exchangeRate = new ExchangeRate(
-                        resultSet.getInt("exchange_rate_id"),
-                        baseCurrency,
-                        targetCurrency,
-                        resultSet.getFloat("rate"));
-                return exchangeRate;
+                return mapToExchangeRate(resultSet);
             } else {
-                return null;
+                throw new CurrencyNotFound("Валюты не сущестует в базе данных");
             }
         } catch (SQLException e) {
             throw new DatabaseIsNotAvailable("База данных недоступна");
@@ -130,5 +105,23 @@ public class ExchangeRateDAO {
             }
             throw new DatabaseIsNotAvailable("База данных недоступна");
         }
+    }
+
+    private ExchangeRate mapToExchangeRate(ResultSet resultSet) throws SQLException {
+        Currency baseCurrency = new Currency(
+                resultSet.getInt("base_id"),
+                resultSet.getString("base_code"),
+                resultSet.getString("base_name"),
+                resultSet.getString("base_sign"));
+        Currency targetCurrency = new Currency(
+                resultSet.getInt("target_id"),
+                resultSet.getString("target_code"),
+                resultSet.getString("target_name"),
+                resultSet.getString("target_sign"));
+        return new ExchangeRate(
+                resultSet.getInt("exchange_rate_id"),
+                baseCurrency,
+                targetCurrency,
+                resultSet.getFloat("rate"));
     }
 }
