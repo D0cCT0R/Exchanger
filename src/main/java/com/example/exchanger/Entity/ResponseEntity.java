@@ -1,7 +1,6 @@
 package com.example.exchanger.Entity;
 
-import com.example.exchanger.model.Currency;
-import jakarta.servlet.http.HttpServletResponse;
+
 
 public class ResponseEntity <T>{
     private int status;
