@@ -5,7 +5,7 @@ import com.example.exchanger.Exception.ErrorResponse;
 import com.example.exchanger.model.Exchange;
 import com.example.exchanger.service.ExchangeService;
 import com.example.exchanger.util.Connector;
-import com.example.exchanger.util.ResponseSender;
+import com.example.exchanger.util.JsonUtil;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,11 +18,11 @@ import java.io.IOException;
 public class ExchangeController extends HttpServlet {
     Connector connector;
     ExchangeService exchangeService;
-    ResponseSender responseSender;
+    JsonUtil jsonUtil;
 
     public ExchangeController() {
         this.connector = new Connector();
-        this.responseSender = new ResponseSender();
+        this.jsonUtil = new JsonUtil();
         this.exchangeService = new ExchangeService(connector);
     }
 
@@ -31,21 +31,25 @@ public class ExchangeController extends HttpServlet {
             String baseCurr = req.getParameter("from");
             String targetCurr = req.getParameter("to");
             String amount = req.getParameter("amount");
-
             if (baseCurr == null || targetCurr == null || amount == null) {
-                responseSender.sendResponse(new ErrorResponse("Отсутствует нужное поле формы"), 400, resp);
+                jsonUtil.sendJsonResponse(resp, 400, new ErrorResponse("Отсутствует нужное поле формы"));
                 return;
             }
             if (baseCurr.length() != 3 || targetCurr.length() != 3) {
-                responseSender.sendResponse(new ErrorResponse("Некорректные поля формы"), 400, resp);
+                jsonUtil.sendJsonResponse(resp, 400, new ErrorResponse("Некорректные поля формы"));
+                return;
+            }
+            float amountValue = Float.parseFloat(amount);
+            if (amountValue <= 0) {
+                jsonUtil.sendJsonResponse(resp, 400, new ErrorResponse("Сумма должна быть больше нуля"));
                 return;
             }
             Exchange exchange = exchangeService.currencyExchange(baseCurr.toUpperCase(), targetCurr.toUpperCase(), Float.parseFloat(amount));
-            responseSender.sendResponse(exchange, 200, resp);
+            jsonUtil.sendJsonResponse(resp, 200, exchange);
         } catch (ApiException e) {
-            responseSender.sendResponse(new ErrorResponse(e.getMessage()), e.getStatusCode(), resp);
+            jsonUtil.sendJsonResponse(resp, e.getStatusCode(), new ErrorResponse(e.getMessage()));
         } catch (Exception e) {
-            responseSender.sendResponse(new ErrorResponse("База данных недоступна"), 500, resp);
+            jsonUtil.sendJsonResponse(resp, 500, new ErrorResponse("Внутренняя ошибка сервера"));
         }
     }
 }

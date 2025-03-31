@@ -4,9 +4,9 @@ package com.example.exchanger.controller;
 import com.example.exchanger.Exception.ApiException;
 import com.example.exchanger.Exception.ErrorResponse;
 import com.example.exchanger.model.ExchangeRate;
-import com.example.exchanger.service.ExchangeRateService;
+import com.example.exchanger.service.ExchangeRateServiceImpl;
 import com.example.exchanger.util.Connector;
-import com.example.exchanger.util.ResponseSender;
+import com.example.exchanger.util.JsonUtil;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,13 +19,13 @@ import java.util.List;
 @WebServlet(name="ExchangeRates", value="/exchangeRates")
 public class ExchangeRatesController extends HttpServlet {
     Connector connector;
-    ExchangeRateService exchangeRateService;
-    ResponseSender responseSender;
+    ExchangeRateServiceImpl exchangeRateServiceImpl;
+    JsonUtil jsonUtil;
 
     public ExchangeRatesController() {
         this.connector = new Connector();
-        this.responseSender = new ResponseSender();
-        this.exchangeRateService = new ExchangeRateService(connector);
+        this.jsonUtil = new JsonUtil();
+        this.exchangeRateServiceImpl = new ExchangeRateServiceImpl(connector);
     }
     public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
@@ -33,30 +33,30 @@ public class ExchangeRatesController extends HttpServlet {
             String targetCurrencyCode  = req.getParameter("targetCurrencyCode");
             String rate = req.getParameter("rate");
             if (baseCurrencyCode == null || targetCurrencyCode == null || rate == null) {
-                responseSender.sendResponse(new ErrorResponse("Отсутствует нужное поле формы"), 400, resp);
+                jsonUtil.sendJsonResponse(resp, 400, new ErrorResponse("Отсутствует нужное поле формы"));
                 return;
             }
             if (baseCurrencyCode.length() != 3 || targetCurrencyCode.length() != 3) {
-                responseSender.sendResponse(new ErrorResponse("Коды валют отстствую в теле запроса"), 400, resp);
+                jsonUtil.sendJsonResponse(resp, 400, new ErrorResponse("Коды валют отстствую в теле запроса"));
                 return;
             }
-            ExchangeRate exchangeRate = exchangeRateService.saveExchangeRate(baseCurrencyCode.toUpperCase(), targetCurrencyCode.toUpperCase(), Float.parseFloat(rate.toUpperCase()));
-            responseSender.sendResponse(exchangeRate, 201, resp);
+            ExchangeRate exchangeRate = exchangeRateServiceImpl.saveExchangeRate(baseCurrencyCode.toUpperCase(), targetCurrencyCode.toUpperCase(), Float.parseFloat(rate.toUpperCase()));
+            jsonUtil.sendJsonResponse(resp, 201, exchangeRate);
         } catch (ApiException e) {
-            responseSender.sendResponse(new ErrorResponse(e.getMessage()), e.getStatusCode(), resp);
+            jsonUtil.sendJsonResponse(resp, e.getStatusCode(), new ErrorResponse(e.getMessage()));
         } catch (Exception e) {
-            responseSender.sendResponse(new ErrorResponse("База данных недоступна"), 500, resp);
+            jsonUtil.sendJsonResponse(resp, 500, new ErrorResponse("Внутренняя ошибка сервера"));
         }
     }
 
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
-            List<ExchangeRate> list = exchangeRateService.getAllExchangeRates();
-            responseSender.sendResponse(list, 200, resp);
+            List<ExchangeRate> list = exchangeRateServiceImpl.getAllExchangeRates();
+            jsonUtil.sendJsonResponse(resp, 200, list);
         } catch (ApiException e) {
-            responseSender.sendResponse(new ErrorResponse(e.getMessage()), e.getStatusCode(), resp);
+            jsonUtil.sendJsonResponse(resp, e.getStatusCode(), new ErrorResponse(e.getMessage()));
         } catch (Exception e) {
-            responseSender.sendResponse(new ErrorResponse("База данных недоступна"), 500, resp);
+            jsonUtil.sendJsonResponse(resp, 500, new ErrorResponse("Внутренняя ошибка сервера"));
         }
     }
 }

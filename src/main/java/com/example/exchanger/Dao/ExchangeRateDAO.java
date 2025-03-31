@@ -1,11 +1,7 @@
 package com.example.exchanger.dao;
 
 
-
-import com.example.exchanger.Exception.ApiException;
-import com.example.exchanger.Exception.CurrencyAlreadyExists;
-import com.example.exchanger.Exception.CurrencyNotFound;
-import com.example.exchanger.Exception.DatabaseIsNotAvailable;
+import com.example.exchanger.Exception.*;
 import com.example.exchanger.model.Currency;
 import com.example.exchanger.model.ExchangeRate;
 import com.example.exchanger.util.Connector;
@@ -15,10 +11,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-//TODO ПОРАБОТАТЬ НАД ОБРАБОТКОЙ ОШИБОК
-
 public class ExchangeRateDAO {
     Connector connector;
+
+    private static final String SELECT_ALL_SQL = "select er.id as exchange_rate_id, er.rate, base_curr.id as base_id, base_curr.code as base_code, " +
+            "base_curr.full_name as base_name, base_curr.sign as base_sign, target_curr.id as target_id, target_curr.code as target_code, target_curr.full_name as target_name, target_curr.sign as target_sign from exchange_rates er " +
+            "join currencies base_curr on er.base_currency_id=base_curr.id join currencies target_curr on er.target_currency_id=target_curr.id";
+    private static final String SELECT_ONE_SQL = SELECT_ALL_SQL + " where base_curr.code=? and target_curr.code=?";
+    private static final String UPDATE_RATE_SQL = "update exchange_rates set rate=? where id=?";
+    private static final String SAVE_RATE_SQL = "insert into exchange_rates (base_currency_id, target_currency_id, rate) values (?,?,?)";
 
     public ExchangeRateDAO(Connector connector) {
         this.connector = connector;
@@ -26,36 +27,29 @@ public class ExchangeRateDAO {
 
     public List<ExchangeRate> getAll() {
         List<ExchangeRate> list = new ArrayList<>();
-        try {
-            Connection connection = connector.getConnection();
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery
-                    ("select er.id as exchange_rate_id, er.rate, base_curr.id as base_id, base_curr.code as base_code, " +
-                            "base_curr.full_name as base_name, base_curr.sign as base_sign, target_curr.id as target_id, target_curr.code as target_code, target_curr.full_name as target_name, target_curr.sign as target_sign from exchange_rates er " +
-                            "join currencies base_curr on er.base_currency_id=base_curr.id join currencies target_curr on er.target_currency_id=target_curr.id");
+        try (Connection connection = connector.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_SQL);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
             while (resultSet.next()) {
                 list.add(mapToExchangeRate(resultSet));
             }
+            return list;
         } catch (SQLException e) {
             throw new DatabaseIsNotAvailable("База данных недоступна");
         }
-        return list;
     }
 
     public ExchangeRate getOne(String baseCurr, String targetCurr) {
-        try {
-            Connection connection = connector.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement
-                    ("select er.id as exchange_rate_id, er.rate, base_curr.id as base_id, base_curr.code as base_code, " +
-                    "base_curr.full_name as base_name, base_curr.sign as base_sign, target_curr.id as target_id, target_curr.code as target_code, target_curr.full_name as target_name, target_curr.sign as target_sign from exchange_rates er " +
-                    "join currencies base_curr on er.base_currency_id=base_curr.id join currencies target_curr on er.target_currency_id=target_curr.id where base_curr.code=? and target_curr.code=?");
+        try (Connection connection = connector.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ONE_SQL)) {
             preparedStatement.setString(1, baseCurr);
             preparedStatement.setString(2, targetCurr);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return mapToExchangeRate(resultSet);
-            } else {
-                throw new CurrencyNotFound("Валюты не сущестует в базе данных");
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapToExchangeRate(resultSet);
+                } else {
+                    throw new ExchangeRateNotFoundException("Курс для пары не найден");
+                }
             }
         } catch (SQLException e) {
             throw new DatabaseIsNotAvailable("База данных недоступна");
@@ -63,42 +57,37 @@ public class ExchangeRateDAO {
     }
 
     public ExchangeRate updateRate(String baseCurr, String targetCurr, float rate) {
-        try{
+        try (Connection connection = connector.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_RATE_SQL)) {
             ExchangeRate exchangeRate = getOne(baseCurr, targetCurr);
-            Connection connection = connector.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement("update exchange_rates set rate=? where id=?");
             preparedStatement.setFloat(1, rate);
             preparedStatement.setInt(2, exchangeRate.getId());
             preparedStatement.executeUpdate();
             exchangeRate.setRate(rate);
             return exchangeRate;
-        } catch (ApiException e) {
-            throw new CurrencyNotFound("Валютная пара отсутствует в базе данных");
+        } catch (ExchangeRateNotFoundException e) {
+            throw new ExchangeRateNotFoundException("Валютная пара отсутствует в базе данных");
         } catch (SQLException e) {
             throw new DatabaseIsNotAvailable("База данных недоступна");
         }
     }
 
     public ExchangeRate saveRate(Currency baseCurrency, Currency targetCurrency, float rate) {
-        try {
-            String sql = "insert into exchange_rates (base_currency_id, target_currency_id, rate) values (?,?,?)";
-            Connection connection = connector.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+        try (Connection connection = connector.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(SAVE_RATE_SQL, Statement.RETURN_GENERATED_KEYS)){
             preparedStatement.setInt(1, baseCurrency.getId());
             preparedStatement.setInt(2, targetCurrency.getId());
             preparedStatement.setFloat(3, rate);
             preparedStatement.executeUpdate();
-            ResultSet resultSet = preparedStatement.getGeneratedKeys();
-            if (resultSet.next()) {
-                int id = resultSet.getInt(1);
-                return new ExchangeRate(id, baseCurrency, targetCurrency, rate);
-            } else {
-                int id = 0;
-                return new ExchangeRate(id, baseCurrency, targetCurrency, rate);
+            try (ResultSet resultSet = preparedStatement.getGeneratedKeys()){
+                if (resultSet.next()) {
+                    return new ExchangeRate(resultSet.getInt(1), baseCurrency, targetCurrency, rate);
+                }
+                throw new SQLException("Не удалось получить ID созданного курса");
             }
         } catch (SQLException e) {
-            if ("23505".equals(e.getSQLState())){
-                throw new CurrencyAlreadyExists("Валютная пара с таким кодом уже существует");
+            if ("23505".equals(e.getSQLState())) {
+                throw new CurrencyPairAlreadyExists("Курс для пары уже существует");
             }
             throw new DatabaseIsNotAvailable("База данных недоступна");
         }
