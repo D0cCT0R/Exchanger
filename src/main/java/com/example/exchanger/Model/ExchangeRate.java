@@ -7,8 +7,6 @@ public class ExchangeRate {
     private Currency targetCurrency;
     private float rate;
 
-    public ExchangeRate() {}
-
     public ExchangeRate(int id, Currency baseCurrency, Currency targetCurrency, float rate) {
         this.id = id;
         this.baseCurrency = baseCurrency;

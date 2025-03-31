@@ -7,8 +7,6 @@ public class Exchange {
     float amount;
     float convertedAmount;
 
-    public Exchange() {
-    }
 
     public Exchange(Currency baseCurrency, Currency targetCurrency, float rate, float amount, float convertedAmount) {
         this.baseCurrency = baseCurrency;
