@@ -6,6 +6,7 @@ import com.example.exchanger.model.Currency;
 import com.example.exchanger.model.ExchangeRate;
 import com.example.exchanger.util.Connector;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,7 @@ public class ExchangeRateDAO {
             }
             return list;
         } catch (SQLException e) {
-            throw new DatabaseIsNotAvailable("База данных недоступна");
+            throw new DatabaseIsNotAvailableException("База данных недоступна");
         }
     }
 
@@ -47,49 +48,49 @@ public class ExchangeRateDAO {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
                     return mapToExchangeRate(resultSet);
-                } else {
-                    throw new ExchangeRateNotFoundException("Курс для пары не найден");
                 }
+                return null;
             }
         } catch (SQLException e) {
-            throw new DatabaseIsNotAvailable("База данных недоступна");
+            throw new DatabaseIsNotAvailableException("База данных недоступна");
         }
     }
 
-    public ExchangeRate updateRate(String baseCurr, String targetCurr, float rate) {
+    public ExchangeRate updateRate(String baseCurr, String targetCurr, BigDecimal rate) {
         try (Connection connection = connector.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_RATE_SQL)) {
             ExchangeRate exchangeRate = getOne(baseCurr, targetCurr);
-            preparedStatement.setFloat(1, rate);
+            if (exchangeRate == null) {
+                return null;
+            }
+            preparedStatement.setBigDecimal(1, rate);
             preparedStatement.setInt(2, exchangeRate.getId());
             preparedStatement.executeUpdate();
             exchangeRate.setRate(rate);
             return exchangeRate;
-        } catch (ExchangeRateNotFoundException e) {
-            throw new ExchangeRateNotFoundException("Валютная пара отсутствует в базе данных");
         } catch (SQLException e) {
-            throw new DatabaseIsNotAvailable("База данных недоступна");
+            throw new DatabaseIsNotAvailableException("База данных недоступна");
         }
     }
 
-    public ExchangeRate saveRate(Currency baseCurrency, Currency targetCurrency, float rate) {
+    public ExchangeRate saveRate(Currency baseCurrency, Currency targetCurrency, BigDecimal rate) {
         try (Connection connection = connector.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(SAVE_RATE_SQL, Statement.RETURN_GENERATED_KEYS)){
             preparedStatement.setInt(1, baseCurrency.getId());
             preparedStatement.setInt(2, targetCurrency.getId());
-            preparedStatement.setFloat(3, rate);
+            preparedStatement.setBigDecimal(3, rate);
             preparedStatement.executeUpdate();
             try (ResultSet resultSet = preparedStatement.getGeneratedKeys()){
                 if (resultSet.next()) {
                     return new ExchangeRate(resultSet.getInt(1), baseCurrency, targetCurrency, rate);
                 }
-                throw new SQLException("Не удалось получить ID созданного курса");
+                throw new FailedToRetrieveIdException("Не удалось получить ID созданного обменного курса");
             }
         } catch (SQLException e) {
             if ("23505".equals(e.getSQLState())) {
-                throw new CurrencyPairAlreadyExists("Курс для пары уже существует");
+                throw new CurrencyPairAlreadyExistsException("Курс для пары уже существует");
             }
-            throw new DatabaseIsNotAvailable("База данных недоступна");
+            throw new DatabaseIsNotAvailableException("База данных недоступна");
         }
     }
 
@@ -108,6 +109,6 @@ public class ExchangeRateDAO {
                 resultSet.getInt("exchange_rate_id"),
                 baseCurrency,
                 targetCurrency,
-                resultSet.getFloat("rate"));
+                resultSet.getBigDecimal("rate"));
     }
 }

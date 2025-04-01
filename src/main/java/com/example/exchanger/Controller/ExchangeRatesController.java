@@ -13,10 +13,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 
 
-@WebServlet(name="ExchangeRates", value="/exchangeRates")
+@WebServlet(name = "ExchangeRates", value = "/exchangeRates")
 public class ExchangeRatesController extends HttpServlet {
     Connector connector;
     ExchangeRateServiceImpl exchangeRateServiceImpl;
@@ -27,36 +28,42 @@ public class ExchangeRatesController extends HttpServlet {
         this.jsonUtil = new JsonUtil();
         this.exchangeRateServiceImpl = new ExchangeRateServiceImpl(connector);
     }
+
     public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             String baseCurrencyCode = req.getParameter("baseCurrencyCode");
-            String targetCurrencyCode  = req.getParameter("targetCurrencyCode");
+            String targetCurrencyCode = req.getParameter("targetCurrencyCode");
             String rate = req.getParameter("rate");
-            if (baseCurrencyCode == null || targetCurrencyCode == null || rate == null) {
-                jsonUtil.sendJsonResponse(resp, 400, new ErrorResponse("Отсутствует нужное поле формы"));
+            if (baseCurrencyCode == null || targetCurrencyCode == null || rate == null
+                    || baseCurrencyCode.isBlank() || targetCurrencyCode.isBlank() || rate.isBlank()) {
+                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Отсутствует нужное поле формы"));
                 return;
             }
             if (baseCurrencyCode.length() != 3 || targetCurrencyCode.length() != 3) {
-                jsonUtil.sendJsonResponse(resp, 400, new ErrorResponse("Коды валют отстствую в теле запроса"));
+                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Коды валют отстствуют в теле запроса"));
                 return;
             }
-            ExchangeRate exchangeRate = exchangeRateServiceImpl.saveExchangeRate(baseCurrencyCode.toUpperCase(), targetCurrencyCode.toUpperCase(), Float.parseFloat(rate.toUpperCase()));
-            jsonUtil.sendJsonResponse(resp, 201, exchangeRate);
+            ExchangeRate exchangeRate = exchangeRateServiceImpl.saveExchangeRate(baseCurrencyCode.toUpperCase(), targetCurrencyCode.toUpperCase(), new BigDecimal(rate));
+            if (exchangeRate == null) {
+                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND, new ErrorResponse("Одна (или обе) валюты из валютной пары не существует в БД"));
+                return;
+            }
+            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_CREATED, exchangeRate);
         } catch (ApiException e) {
             jsonUtil.sendJsonResponse(resp, e.getStatusCode(), new ErrorResponse(e.getMessage()));
         } catch (Exception e) {
-            jsonUtil.sendJsonResponse(resp, 500, new ErrorResponse("Внутренняя ошибка сервера"));
+            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, new ErrorResponse("Внутренняя ошибка сервера"));
         }
     }
 
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             List<ExchangeRate> list = exchangeRateServiceImpl.getAllExchangeRates();
-            jsonUtil.sendJsonResponse(resp, 200, list);
+            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_OK, list);
         } catch (ApiException e) {
             jsonUtil.sendJsonResponse(resp, e.getStatusCode(), new ErrorResponse(e.getMessage()));
         } catch (Exception e) {
-            jsonUtil.sendJsonResponse(resp, 500, new ErrorResponse("Внутренняя ошибка сервера"));
+            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, new ErrorResponse("Внутренняя ошибка сервера"));
         }
     }
 }

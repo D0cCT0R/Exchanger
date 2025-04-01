@@ -1,10 +1,9 @@
 package com.example.exchanger.dao;
 
-import com.example.exchanger.Exception.CurrencyAlreadyExists;
-import com.example.exchanger.Exception.CurrencyNotFound;
-import com.example.exchanger.Exception.DatabaseIsNotAvailable;
+import com.example.exchanger.Exception.CurrencyAlreadyExistsException;
+import com.example.exchanger.Exception.DatabaseIsNotAvailableException;
+import com.example.exchanger.Exception.FailedToRetrieveIdException;
 import com.example.exchanger.model.Currency;
-import com.example.exchanger.model.ExchangeRate;
 import com.example.exchanger.util.Connector;
 
 import java.sql.*;
@@ -32,7 +31,7 @@ public class CurrencyDAO {
             }
             return list;
         } catch (SQLException e) {
-            throw new DatabaseIsNotAvailable("База данных недоступна");
+            throw new DatabaseIsNotAvailableException("База данных недоступна");
         }
     }
 
@@ -43,12 +42,11 @@ public class CurrencyDAO {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
                     return mapToCurrency(resultSet);
-                } else {
-                    throw new CurrencyNotFound("Валюта не найдена");
                 }
+                return null;
             }
         } catch (SQLException e) {
-            throw new DatabaseIsNotAvailable("База данных недоступна");
+            throw new DatabaseIsNotAvailableException("База данных недоступна");
         }
     }
 
@@ -63,13 +61,13 @@ public class CurrencyDAO {
                 if (resultSet.next()) {
                     return new Currency(resultSet.getInt(1), name, code, sign);
                 }
-                throw new SQLException("Не удалось получить ID созданного курса");
+                throw new FailedToRetrieveIdException("Не удалось получить ID созданного курса");
             }
         } catch (SQLException e) {
             if ("23505".equals(e.getSQLState())) {
-                throw new CurrencyAlreadyExists("Валюта с таким кодом уже существует");
+                throw new CurrencyAlreadyExistsException("Валюта с таким кодом уже существует");
             }
-            throw new DatabaseIsNotAvailable("База данных недоступна");
+            throw new DatabaseIsNotAvailableException("База данных недоступна");
         }
     }
 

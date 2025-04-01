@@ -1,16 +1,13 @@
 package com.example.exchanger.service;
 
-import com.example.exchanger.Exception.ExchangeRateNotFoundException;
 import com.example.exchanger.dao.ExchangeRateDAO;
 import com.example.exchanger.model.Exchange;
 import com.example.exchanger.model.ExchangeRate;
 import com.example.exchanger.util.Connector;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
-//TODO доделать добавить bigDecimal
-//TODO сделать проверку деления на 0
-//TODO понять почему жесткая связь с дао это плохо и почему лучше внедрять зависимости через конструктор
 
 public class ExchangeService {
     ExchangeRateDAO exchangeRateDAO;
@@ -20,24 +17,35 @@ public class ExchangeService {
         this.exchangeRateDAO = new ExchangeRateDAO(connector);
     }
 
-    public Exchange currencyExchange(String baseCurr, String targetCurr, float amount) {
+    public Exchange currencyExchange(String baseCurr, String targetCurr, BigDecimal amount) {
         ExchangeRate exchangeRate = exchangeRateDAO.getOne(baseCurr, targetCurr);
         if (exchangeRate != null) {
-            return new Exchange(exchangeRate.getBaseCurrency(), exchangeRate.getTargetCurrency(),
-                    exchangeRate.getRate(), amount, amount * exchangeRate.getRate());
+            return new Exchange(
+                    exchangeRate.getBaseCurrency(),
+                    exchangeRate.getTargetCurrency(),
+                    exchangeRate.getRate(),
+                    amount,
+                    amount.multiply(exchangeRate.getRate()));
         }
         ExchangeRate reversRate = exchangeRateDAO.getOne(targetCurr, baseCurr);
         if (reversRate != null) {
-            return new Exchange(reversRate.getTargetCurrency(), reversRate.getBaseCurrency(),
-                    (1 / reversRate.getRate()), amount, amount * (1 / reversRate.getRate()));
+            return new Exchange(
+                    reversRate.getTargetCurrency(),
+                    reversRate.getBaseCurrency(),
+                    (BigDecimal.ONE.divide(reversRate.getRate(), 6, RoundingMode.HALF_UP)),
+                    amount,
+                    amount.multiply(BigDecimal.ONE.divide(reversRate.getRate(), 6, RoundingMode.HALF_UP)));
         }
         ExchangeRate usdFromRate = exchangeRateDAO.getOne(USD_CODE, baseCurr);
         ExchangeRate usdToRate = exchangeRateDAO.getOne(USD_CODE, targetCurr);
         if (usdFromRate != null && usdToRate != null) {
-            return new Exchange(usdFromRate.getTargetCurrency(), usdToRate.getTargetCurrency(),
-                    (usdToRate.getRate() / usdFromRate.getRate()), amount, (amount * (usdToRate.getRate() / usdFromRate.getRate())));
+            return new Exchange(usdFromRate.getTargetCurrency(),
+                    usdToRate.getTargetCurrency(),
+                    (usdToRate.getRate().divide(usdFromRate.getRate(), 6, RoundingMode.HALF_UP)),
+                    amount,
+                    (amount.multiply(usdToRate.getRate().divide(usdFromRate.getRate(), 6, RoundingMode.HALF_UP))));
         }
-        throw new ExchangeRateNotFoundException("Не удалось найти подходящий курс в базе данных");
+        return null;
     }
 
 }

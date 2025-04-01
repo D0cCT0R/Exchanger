@@ -13,15 +13,10 @@ import java.util.Properties;
 
 /**
  * Утилита для работы с пулом соединений HikariCP
- * Для использования необходимо создать application.properties с параметрами:
- * - db_url
- * - db_user
- * - db_password
  */
 
 public class Connector {
     private final HikariDataSource dataSource;
-
     public Connector() {
         try {
             HikariConfig config = new HikariConfig();
@@ -46,7 +41,4 @@ public class Connector {
     public Connection getConnection() throws SQLException {
         return dataSource.getConnection();
     }
-
-
-
 }

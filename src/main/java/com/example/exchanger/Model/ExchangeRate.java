@@ -1,13 +1,15 @@
 package com.example.exchanger.model;
 
+import java.math.BigDecimal;
+
 public class ExchangeRate {
 
     private int id;
     private Currency baseCurrency;
     private Currency targetCurrency;
-    private float rate;
+    private BigDecimal rate;
 
-    public ExchangeRate(int id, Currency baseCurrency, Currency targetCurrency, float rate) {
+    public ExchangeRate(int id, Currency baseCurrency, Currency targetCurrency, BigDecimal rate) {
         this.id = id;
         this.baseCurrency = baseCurrency;
         this.rate = rate;
@@ -38,11 +40,11 @@ public class ExchangeRate {
         this.targetCurrency = targetCurrencyId;
     }
 
-    public float getRate() {
+    public BigDecimal getRate() {
         return rate;
     }
 
-    public void setRate(float rate) {
+    public void setRate(BigDecimal rate) {
         this.rate = rate;
     }
 }

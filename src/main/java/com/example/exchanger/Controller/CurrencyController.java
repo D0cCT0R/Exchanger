@@ -29,16 +29,20 @@ public class CurrencyController extends HttpServlet {
         String pathInfo = req.getPathInfo();
         String currencyCode = pathInfo.substring(1).toUpperCase();
         if (currencyCode.length() != 3) {
-            jsonUtil.sendJsonResponse(resp, 400, new ErrorResponse("Код валюты отсутствует в адресе"));
+            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Код валюты отсутствует в адресе"));
             return;
         }
         try {
             Currency currency = currencyServiceImpl.getOneCurrency(currencyCode);
-            jsonUtil.sendJsonResponse(resp, 200, currency);
+            if (currency == null) {
+                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND, new ErrorResponse("Валюта не найдена"));
+                return;
+            }
+            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_OK, currency);
         } catch (ApiException e) {
             jsonUtil.sendJsonResponse(resp, e.getStatusCode(), new ErrorResponse(e.getMessage()));
         } catch (Exception e){
-            jsonUtil.sendJsonResponse(resp, 500, new ErrorResponse("Внутренняя ошибка сервера"));
+            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, new ErrorResponse("Внутренняя ошибка сервера"));
         }
     }
 }

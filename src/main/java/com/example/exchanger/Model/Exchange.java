@@ -1,14 +1,16 @@
 package com.example.exchanger.model;
 
+import java.math.BigDecimal;
+
 public class Exchange {
     Currency baseCurrency;
     Currency targetCurrency;
-    float rate;
-    float amount;
-    float convertedAmount;
+    BigDecimal rate;
+    BigDecimal amount;
+    BigDecimal convertedAmount;
 
 
-    public Exchange(Currency baseCurrency, Currency targetCurrency, float rate, float amount, float convertedAmount) {
+    public Exchange(Currency baseCurrency, Currency targetCurrency, BigDecimal rate, BigDecimal amount, BigDecimal convertedAmount) {
         this.baseCurrency = baseCurrency;
         this.targetCurrency = targetCurrency;
         this.rate = rate;
@@ -32,27 +34,27 @@ public class Exchange {
         this.targetCurrency = targetCurrency;
     }
 
-    public float getRate() {
+    public BigDecimal getRate() {
         return rate;
     }
 
-    public void setRate(float rate) {
+    public void setRate(BigDecimal rate) {
         this.rate = rate;
     }
 
-    public float getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(float amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
-    public float getConvertedAmount() {
+    public BigDecimal getConvertedAmount() {
         return convertedAmount;
     }
 
-    public void setConvertedAmount(float convertedAmount) {
+    public void setConvertedAmount(BigDecimal convertedAmount) {
         this.convertedAmount = convertedAmount;
     }
 }

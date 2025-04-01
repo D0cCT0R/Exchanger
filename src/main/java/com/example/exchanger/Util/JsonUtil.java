@@ -6,8 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * Утилита для отправки json ответа на клиент </br>
- *  Использует Jackson {@link ObjectMapper} для сериализации объектов в JSON.
+ * Утилита для отправки json ответа на клиент
  */
 
 public class JsonUtil {

@@ -32,26 +32,30 @@ public class CurrenciesController extends HttpServlet {
             String code = req.getParameter("code");
             String sign = req.getParameter("sign");
             if (name == null || code == null || sign == null || name.isBlank() || code.isBlank() || sign.isBlank()) {
-                jsonUtil.sendJsonResponse(resp, 400, new ErrorResponse("Отсутствует нужное поле формы"));
+                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Отсутствует нужное поле формы"));
+                return;
+            }
+            if (code.length() != 3) {
+                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Некорректный код валюты"));
                 return;
             }
             Currency currency = currencyServiceImpl.saveCurrency(name, code.toUpperCase(), sign);
-            jsonUtil.sendJsonResponse(resp, 201, currency);
+            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_CREATED, currency);
         } catch (ApiException e) {
             jsonUtil.sendJsonResponse(resp, e.getStatusCode(), new ErrorResponse(e.getMessage()));
         } catch (Exception e) {
-            jsonUtil.sendJsonResponse(resp, 500, new ErrorResponse("Внутренняя ошибка сервера"));
+            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, new ErrorResponse("Внутренняя ошибка сервера"));
         }
     }
 
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             List<Currency> list = currencyServiceImpl.getAllCurrencies();
-            jsonUtil.sendJsonResponse(resp, 200, list);
+            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_OK, list);
         } catch (ApiException e) {
             jsonUtil.sendJsonResponse(resp, e.getStatusCode(), new ErrorResponse(e.getMessage()));
         } catch (Exception e){
-            jsonUtil.sendJsonResponse(resp, 500, new ErrorResponse("Внутренняя ошибка сервера"));
+            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, new ErrorResponse("Внутренняя ошибка сервера"));
         }
     }
 }

@@ -12,9 +12,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 
 
-@WebServlet(name="ExchangeController", value="/exchange")
+@WebServlet(name = "ExchangeController", value = "/exchange")
 public class ExchangeController extends HttpServlet {
     Connector connector;
     ExchangeService exchangeService;
@@ -31,25 +32,29 @@ public class ExchangeController extends HttpServlet {
             String baseCurr = req.getParameter("from");
             String targetCurr = req.getParameter("to");
             String amount = req.getParameter("amount");
-            if (baseCurr == null || targetCurr == null || amount == null) {
-                jsonUtil.sendJsonResponse(resp, 400, new ErrorResponse("Отсутствует нужное поле формы"));
+            if (baseCurr == null || targetCurr == null || amount == null
+                    || baseCurr.isBlank() || targetCurr.isBlank() || amount.isBlank()) {
+                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Отсутствует нужное поле формы"));
                 return;
             }
             if (baseCurr.length() != 3 || targetCurr.length() != 3) {
-                jsonUtil.sendJsonResponse(resp, 400, new ErrorResponse("Некорректные поля формы"));
+                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Некорректные поля формы"));
                 return;
             }
-            float amountValue = Float.parseFloat(amount);
-            if (amountValue <= 0) {
-                jsonUtil.sendJsonResponse(resp, 400, new ErrorResponse("Сумма должна быть больше нуля"));
+            BigDecimal amountValue = new BigDecimal(amount);
+            if (amountValue.compareTo(BigDecimal.ZERO) <= 0) {
+                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Сумма должна быть больше нуля"));
                 return;
             }
-            Exchange exchange = exchangeService.currencyExchange(baseCurr.toUpperCase(), targetCurr.toUpperCase(), Float.parseFloat(amount));
-            jsonUtil.sendJsonResponse(resp, 200, exchange);
+            Exchange exchange = exchangeService.currencyExchange(baseCurr.toUpperCase(), targetCurr.toUpperCase(), amountValue);
+            if (exchange ==  null) {
+                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND, new ErrorResponse("Не удалось найти подходящий курс в базе данных"));
+            }
+            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_OK, exchange);
         } catch (ApiException e) {
             jsonUtil.sendJsonResponse(resp, e.getStatusCode(), new ErrorResponse(e.getMessage()));
         } catch (Exception e) {
-            jsonUtil.sendJsonResponse(resp, 500, new ErrorResponse("Внутренняя ошибка сервера"));
+            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, new ErrorResponse("Внутренняя ошибка сервера"));
         }
     }
 }
