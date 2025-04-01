@@ -1,7 +1,6 @@
 package com.example.exchanger.service;
 
 import com.example.exchanger.model.Currency;
-import com.example.exchanger.util.Connector;
 
 import java.util.List;
 
