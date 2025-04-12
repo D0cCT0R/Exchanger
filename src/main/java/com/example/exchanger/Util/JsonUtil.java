@@ -11,7 +11,7 @@ import java.io.IOException;
 
 public class JsonUtil {
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    public void sendJsonResponse(HttpServletResponse resp, int status, Object data) throws IOException {
+    public static void sendJsonResponse(HttpServletResponse resp, int status, Object data) throws IOException {
         resp.setContentType("application/json; charset=UTF-8");
         resp.setStatus(status);
         objectMapper.writeValue(resp.getWriter(), data);

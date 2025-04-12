@@ -22,41 +22,33 @@ import java.util.stream.Collectors;
 
 @WebServlet(name="ExchangeRateController", value="/exchangeRate/*")
 public class ExchangeRateController extends HttpServlet {
-    Connector connector;
-    ExchangeRateServiceImpl exchangeRateServiceImpl;
-    JsonUtil jsonUtil;
-
-    public ExchangeRateController() {
-        this.connector = new Connector();
-        this.exchangeRateServiceImpl = new ExchangeRateServiceImpl(connector);
-        this.jsonUtil = new JsonUtil();
-    }
+    private final ExchangeRateServiceImpl exchangeRateServiceImpl = new ExchangeRateServiceImpl();
 
     public void doPatch(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             String pathInfo = req.getPathInfo().substring(1).toUpperCase();
             if (pathInfo.length() != 6) {
-                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Коды валют пары отсутствуют в адресе"));
+                JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Коды валют пары отсутствуют в адресе"));
                 return;
             }
             Map<String, String> map = parseFormData(req);
             String bodyRate = map.get("rate");
             if (bodyRate == null) {
-                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Отсутствует нужное поле формы"));
+                JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Отсутствует нужное поле формы"));
                 return;
             }
             String baseCurr = pathInfo.substring(0,3);
             String targetCurr = pathInfo.substring(3);
             ExchangeRate exchangeRate = exchangeRateServiceImpl.updateExchangeRate(baseCurr, targetCurr, new BigDecimal(bodyRate));
             if (exchangeRate == null) {
-                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND, new ErrorResponse("Валютная пара отсутствует в базе данных"));
+                JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND, new ErrorResponse("Валютная пара отсутствует в базе данных"));
                 return;
             }
-            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_OK, exchangeRate);
+            JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_OK, exchangeRate);
         } catch (ApiException e) {
-            jsonUtil.sendJsonResponse(resp, e.getStatusCode(), new ErrorResponse(e.getMessage()));
+            JsonUtil.sendJsonResponse(resp, e.getStatusCode(), new ErrorResponse(e.getMessage()));
         } catch (Exception e) {
-            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, new ErrorResponse("Внутренняя ошибка сервера"));
+            JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, new ErrorResponse("Внутренняя ошибка сервера"));
         }
     }
 
@@ -64,21 +56,21 @@ public class ExchangeRateController extends HttpServlet {
         try {
             String pathInfo = req.getPathInfo().substring(1).toUpperCase();
             if (pathInfo.length() != 6) {
-                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Коды валют пары отсутствуют в адресе"));
+                JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Коды валют пары отсутствуют в адресе"));
                 return;
             }
             String baseCurr = pathInfo.substring(0,3);
             String targetCurr = pathInfo.substring(3);
             ExchangeRate exchangeRate = exchangeRateServiceImpl.getExchangeRate(baseCurr, targetCurr);
             if (exchangeRate == null) {
-                jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND, new ErrorResponse("Обменный курс не найден"));
+                JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND, new ErrorResponse("Обменный курс не найден"));
                 return;
             }
-            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_OK, exchangeRate);
+            JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_OK, exchangeRate);
         } catch (ApiException e) {
-            jsonUtil.sendJsonResponse(resp, e.getStatusCode(), new ErrorResponse(e.getMessage()));
+            JsonUtil.sendJsonResponse(resp, e.getStatusCode(), new ErrorResponse(e.getMessage()));
         } catch (Exception e) {
-            jsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, new ErrorResponse("Внутренняя ошибка сервера"));
+            JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, new ErrorResponse("Внутренняя ошибка сервера"));
         }
     }
     private Map<String, String> parseFormData(HttpServletRequest request) throws IOException {

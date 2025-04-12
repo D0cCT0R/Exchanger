@@ -13,8 +13,6 @@ import java.util.List;
 
 
 public class ExchangeRateDAO {
-    Connector connector;
-
     private static final String SELECT_ALL_SQL = "select er.id as exchange_rate_id, er.rate, base_curr.id as base_id, base_curr.code as base_code, " +
             "base_curr.full_name as base_name, base_curr.sign as base_sign, target_curr.id as target_id, target_curr.code as target_code, target_curr.full_name as target_name, target_curr.sign as target_sign from exchange_rates er " +
             "join currencies base_curr on er.base_currency_id=base_curr.id join currencies target_curr on er.target_currency_id=target_curr.id";
@@ -22,13 +20,11 @@ public class ExchangeRateDAO {
     private static final String UPDATE_RATE_SQL = "update exchange_rates set rate=? where id=?";
     private static final String SAVE_RATE_SQL = "insert into exchange_rates (base_currency_id, target_currency_id, rate) values (?,?,?)";
 
-    public ExchangeRateDAO(Connector connector) {
-        this.connector = connector;
-    }
+
 
     public List<ExchangeRate> getAll() {
         List<ExchangeRate> list = new ArrayList<>();
-        try (Connection connection = connector.getConnection();
+        try (Connection connection = Connector.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_SQL);
              ResultSet resultSet = preparedStatement.executeQuery()) {
             while (resultSet.next()) {
@@ -41,7 +37,7 @@ public class ExchangeRateDAO {
     }
 
     public ExchangeRate getOne(String baseCurr, String targetCurr) {
-        try (Connection connection = connector.getConnection();
+        try (Connection connection = Connector.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ONE_SQL)) {
             preparedStatement.setString(1, baseCurr);
             preparedStatement.setString(2, targetCurr);
@@ -57,7 +53,7 @@ public class ExchangeRateDAO {
     }
 
     public ExchangeRate updateRate(String baseCurr, String targetCurr, BigDecimal rate) {
-        try (Connection connection = connector.getConnection();
+        try (Connection connection = Connector.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_RATE_SQL)) {
             ExchangeRate exchangeRate = getOne(baseCurr, targetCurr);
             if (exchangeRate == null) {
@@ -74,7 +70,7 @@ public class ExchangeRateDAO {
     }
 
     public ExchangeRate saveRate(Currency baseCurrency, Currency targetCurrency, BigDecimal rate) {
-        try (Connection connection = connector.getConnection();
+        try (Connection connection = Connector.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(SAVE_RATE_SQL, Statement.RETURN_GENERATED_KEYS)){
             preparedStatement.setInt(1, baseCurrency.getId());
             preparedStatement.setInt(2, targetCurrency.getId());

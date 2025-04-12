@@ -4,18 +4,13 @@ import com.example.exchanger.dao.CurrencyDAO;
 import com.example.exchanger.dao.ExchangeRateDAO;
 import com.example.exchanger.model.Currency;
 import com.example.exchanger.model.ExchangeRate;
-import com.example.exchanger.util.Connector;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 public class ExchangeRateServiceImpl implements ExchangeRateService{
-    ExchangeRateDAO exchangeRateDao;
-    CurrencyDAO currencyDAO;
-    public ExchangeRateServiceImpl(Connector connector) {
-        this.exchangeRateDao = new ExchangeRateDAO(connector);
-        this.currencyDAO = new CurrencyDAO(connector);
-    }
+    private final ExchangeRateDAO exchangeRateDao = new ExchangeRateDAO();;
+    private final CurrencyDAO currencyDAO = new CurrencyDAO();
 
     public List<ExchangeRate> getAllExchangeRates() {
         return exchangeRateDao.getAll();

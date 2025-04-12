@@ -3,19 +3,14 @@ package com.example.exchanger.service;
 import com.example.exchanger.dao.ExchangeRateDAO;
 import com.example.exchanger.model.Exchange;
 import com.example.exchanger.model.ExchangeRate;
-import com.example.exchanger.util.Connector;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 
 public class ExchangeService {
-    ExchangeRateDAO exchangeRateDAO;
+    private final ExchangeRateDAO exchangeRateDAO = new ExchangeRateDAO();
     private static final String USD_CODE = "USD";
-
-    public ExchangeService(Connector connector) {
-        this.exchangeRateDAO = new ExchangeRateDAO(connector);
-    }
 
     public Exchange currencyExchange(String baseCurr, String targetCurr, BigDecimal amount) {
         ExchangeRate exchangeRate = exchangeRateDAO.getOne(baseCurr, targetCurr);

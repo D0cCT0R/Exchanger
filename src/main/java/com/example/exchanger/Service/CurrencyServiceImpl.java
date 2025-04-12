@@ -7,11 +7,7 @@ import com.example.exchanger.util.Connector;
 import java.util.List;
 
 public class CurrencyServiceImpl implements CurrencyService{
-    CurrencyDAO currencyDAO;
-
-    public CurrencyServiceImpl(Connector connector) {
-        this.currencyDAO = new CurrencyDAO(connector);
-    }
+    private final CurrencyDAO currencyDAO = new CurrencyDAO();
 
     public List<Currency> getAllCurrencies() {
         return currencyDAO.getAll();
