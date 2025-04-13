@@ -7,6 +7,7 @@ import com.example.exchanger.model.ExchangeRate;
 import com.example.exchanger.service.ExchangeRateServiceImpl;
 import com.example.exchanger.util.Connector;
 import com.example.exchanger.util.JsonUtil;
+import com.example.exchanger.validation.Validator;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,12 +28,11 @@ public class ExchangeRatesController extends HttpServlet {
             String baseCurrencyCode = req.getParameter("baseCurrencyCode");
             String targetCurrencyCode = req.getParameter("targetCurrencyCode");
             String rate = req.getParameter("rate");
-            if (baseCurrencyCode == null || targetCurrencyCode == null || rate == null
-                    || baseCurrencyCode.isBlank() || targetCurrencyCode.isBlank() || rate.isBlank()) {
+            if (Validator.validateRequestBody(baseCurrencyCode, targetCurrencyCode, rate)) {
                 JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Отсутствует нужное поле формы"));
                 return;
             }
-            if (baseCurrencyCode.length() != 3 || targetCurrencyCode.length() != 3) {
+            if (Validator.isValidCurrencyCode(baseCurrencyCode) || Validator.isValidCurrencyCode(targetCurrencyCode)) {
                 JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Коды валют отстствуют в теле запроса"));
                 return;
             }

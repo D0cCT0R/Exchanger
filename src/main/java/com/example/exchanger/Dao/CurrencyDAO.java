@@ -3,6 +3,7 @@ package com.example.exchanger.dao;
 import com.example.exchanger.Exception.CurrencyAlreadyExistsException;
 import com.example.exchanger.Exception.DatabaseIsNotAvailableException;
 import com.example.exchanger.Exception.FailedToRetrieveIdException;
+import com.example.exchanger.mapper.DataMapper;
 import com.example.exchanger.model.Currency;
 import com.example.exchanger.util.Connector;
 
@@ -21,7 +22,7 @@ public class CurrencyDAO {
              PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_SQL);
              ResultSet resultSet = preparedStatement.executeQuery()) {
             while (resultSet.next()) {
-                list.add(mapToCurrency(resultSet));
+                list.add(DataMapper.mapToCurrency(resultSet));
             }
             return list;
         } catch (SQLException e) {
@@ -35,7 +36,7 @@ public class CurrencyDAO {
             preparedStatement.setString(1, code);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    return mapToCurrency(resultSet);
+                    return DataMapper.mapToCurrency(resultSet);
                 }
                 return null;
             }
@@ -51,7 +52,7 @@ public class CurrencyDAO {
             preparedStatement.setString(2, code);
             preparedStatement.setString(3, sign);
             preparedStatement.executeUpdate();
-            try(ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
+            try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
                 if (resultSet.next()) {
                     return new Currency(resultSet.getInt(1), name, code, sign);
                 }
@@ -64,13 +65,5 @@ public class CurrencyDAO {
             throw new DatabaseIsNotAvailableException("База данных недоступна");
         }
     }
-
-    private Currency mapToCurrency(ResultSet resultSet) throws SQLException {
-        return new Currency(resultSet.getInt("id"),
-                resultSet.getString("code"),
-                resultSet.getString("full_name"),
-                resultSet.getString("sign"));
-    }
-
 }
 

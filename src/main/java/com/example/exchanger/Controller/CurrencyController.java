@@ -6,6 +6,7 @@ import com.example.exchanger.model.Currency;
 import com.example.exchanger.service.CurrencyServiceImpl;
 import com.example.exchanger.util.Connector;
 import com.example.exchanger.util.JsonUtil;
+import com.example.exchanger.validation.Validator;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,7 +22,7 @@ public class CurrencyController extends HttpServlet {
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String pathInfo = req.getPathInfo();
         String currencyCode = pathInfo.substring(1).toUpperCase();
-        if (currencyCode.length() != 3) {
+        if (Validator.isValidCurrencyCode(currencyCode)) {
             JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Код валюты отсутствует в адресе"));
             return;
         }

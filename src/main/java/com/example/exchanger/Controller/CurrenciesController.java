@@ -6,6 +6,7 @@ import com.example.exchanger.model.Currency;
 import com.example.exchanger.service.CurrencyServiceImpl;
 import com.example.exchanger.util.Connector;
 import com.example.exchanger.util.JsonUtil;
+import com.example.exchanger.validation.Validator;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,11 +24,11 @@ public class CurrenciesController extends HttpServlet {
             String name = req.getParameter("name");
             String code = req.getParameter("code");
             String sign = req.getParameter("sign");
-            if (name == null || code == null || sign == null || name.isBlank() || code.isBlank() || sign.isBlank()) {
+            if (Validator.validateRequestBody(name, code, sign)) {
                 JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Отсутствует нужное поле формы"));
                 return;
             }
-            if (code.length() != 3) {
+            if (Validator.isValidCurrencyCode(code)) {
                 JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Некорректный код валюты"));
                 return;
             }

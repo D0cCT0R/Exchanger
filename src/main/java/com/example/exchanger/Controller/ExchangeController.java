@@ -6,6 +6,7 @@ import com.example.exchanger.model.Exchange;
 import com.example.exchanger.service.ExchangeService;
 import com.example.exchanger.util.Connector;
 import com.example.exchanger.util.JsonUtil;
+import com.example.exchanger.validation.Validator;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,12 +25,11 @@ public class ExchangeController extends HttpServlet {
             String baseCurr = req.getParameter("from");
             String targetCurr = req.getParameter("to");
             String amount = req.getParameter("amount");
-            if (baseCurr == null || targetCurr == null || amount == null
-                    || baseCurr.isBlank() || targetCurr.isBlank() || amount.isBlank()) {
+            if (Validator.validateRequestBody(baseCurr, targetCurr, amount)) {
                 JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Отсутствует нужное поле формы"));
                 return;
             }
-            if (baseCurr.length() != 3 || targetCurr.length() != 3) {
+            if (Validator.isValidCurrencyCode(baseCurr) || Validator.isValidCurrencyCode(targetCurr)) {
                 JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Некорректные поля формы"));
                 return;
             }
@@ -41,6 +41,7 @@ public class ExchangeController extends HttpServlet {
             Exchange exchange = exchangeService.currencyExchange(baseCurr.toUpperCase(), targetCurr.toUpperCase(), amountValue);
             if (exchange ==  null) {
                 JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_NOT_FOUND, new ErrorResponse("Не удалось найти подходящий курс в базе данных"));
+                return;
             }
             JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_OK, exchange);
         } catch (ApiException e) {

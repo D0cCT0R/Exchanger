@@ -3,11 +3,11 @@ package com.example.exchanger.model;
 import java.math.BigDecimal;
 
 public class Exchange {
-    Currency baseCurrency;
-    Currency targetCurrency;
-    BigDecimal rate;
-    BigDecimal amount;
-    BigDecimal convertedAmount;
+    private Currency baseCurrency;
+    private Currency targetCurrency;
+    private BigDecimal rate;
+    private BigDecimal amount;
+    private BigDecimal convertedAmount;
 
 
     public Exchange(Currency baseCurrency, Currency targetCurrency, BigDecimal rate, BigDecimal amount, BigDecimal convertedAmount) {

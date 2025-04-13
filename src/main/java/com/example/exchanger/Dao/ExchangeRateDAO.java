@@ -2,6 +2,7 @@ package com.example.exchanger.dao;
 
 
 import com.example.exchanger.Exception.*;
+import com.example.exchanger.mapper.DataMapper;
 import com.example.exchanger.model.Currency;
 import com.example.exchanger.model.ExchangeRate;
 import com.example.exchanger.util.Connector;
@@ -21,14 +22,13 @@ public class ExchangeRateDAO {
     private static final String SAVE_RATE_SQL = "insert into exchange_rates (base_currency_id, target_currency_id, rate) values (?,?,?)";
 
 
-
     public List<ExchangeRate> getAll() {
         List<ExchangeRate> list = new ArrayList<>();
         try (Connection connection = Connector.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_SQL);
              ResultSet resultSet = preparedStatement.executeQuery()) {
             while (resultSet.next()) {
-                list.add(mapToExchangeRate(resultSet));
+                list.add(DataMapper.mapToExchangeRate(resultSet));
             }
             return list;
         } catch (SQLException e) {
@@ -43,7 +43,7 @@ public class ExchangeRateDAO {
             preparedStatement.setString(2, targetCurr);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    return mapToExchangeRate(resultSet);
+                    return DataMapper.mapToExchangeRate(resultSet);
                 }
                 return null;
             }
@@ -71,12 +71,12 @@ public class ExchangeRateDAO {
 
     public ExchangeRate saveRate(Currency baseCurrency, Currency targetCurrency, BigDecimal rate) {
         try (Connection connection = Connector.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(SAVE_RATE_SQL, Statement.RETURN_GENERATED_KEYS)){
+             PreparedStatement preparedStatement = connection.prepareStatement(SAVE_RATE_SQL, Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setInt(1, baseCurrency.getId());
             preparedStatement.setInt(2, targetCurrency.getId());
             preparedStatement.setBigDecimal(3, rate);
             preparedStatement.executeUpdate();
-            try (ResultSet resultSet = preparedStatement.getGeneratedKeys()){
+            try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
                 if (resultSet.next()) {
                     return new ExchangeRate(resultSet.getInt(1), baseCurrency, targetCurrency, rate);
                 }
@@ -88,23 +88,5 @@ public class ExchangeRateDAO {
             }
             throw new DatabaseIsNotAvailableException("База данных недоступна");
         }
-    }
-
-    private ExchangeRate mapToExchangeRate(ResultSet resultSet) throws SQLException {
-        Currency baseCurrency = new Currency(
-                resultSet.getInt("base_id"),
-                resultSet.getString("base_code"),
-                resultSet.getString("base_name"),
-                resultSet.getString("base_sign"));
-        Currency targetCurrency = new Currency(
-                resultSet.getInt("target_id"),
-                resultSet.getString("target_code"),
-                resultSet.getString("target_name"),
-                resultSet.getString("target_sign"));
-        return new ExchangeRate(
-                resultSet.getInt("exchange_rate_id"),
-                baseCurrency,
-                targetCurrency,
-                resultSet.getBigDecimal("rate"));
     }
 }

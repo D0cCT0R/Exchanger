@@ -7,6 +7,7 @@ import com.example.exchanger.model.ExchangeRate;
 import com.example.exchanger.service.ExchangeRateServiceImpl;
 import com.example.exchanger.util.Connector;
 import com.example.exchanger.util.JsonUtil;
+import com.example.exchanger.validation.Validator;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,7 +28,7 @@ public class ExchangeRateController extends HttpServlet {
     public void doPatch(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             String pathInfo = req.getPathInfo().substring(1).toUpperCase();
-            if (pathInfo.length() != 6) {
+            if (Validator.isValidCurrencyPair(pathInfo)) {
                 JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Коды валют пары отсутствуют в адресе"));
                 return;
             }
@@ -55,7 +56,7 @@ public class ExchangeRateController extends HttpServlet {
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             String pathInfo = req.getPathInfo().substring(1).toUpperCase();
-            if (pathInfo.length() != 6) {
+            if (Validator.isValidCurrencyPair(pathInfo)) {
                 JsonUtil.sendJsonResponse(resp, HttpServletResponse.SC_BAD_REQUEST, new ErrorResponse("Коды валют пары отсутствуют в адресе"));
                 return;
             }
